@@ -99,7 +99,7 @@ class WebGLApp {
   setup() {
     this.setupGeometry();
     this.resize();
-    this.gl.clearColor(0.702, 0, 1, 1.0);
+    this.gl.clearColor(0, 0, 0.2, 1.0);
     this.running = true;
   }
   /**
@@ -143,19 +143,23 @@ class WebGLApp {
     const canvasWidth = this.gl.canvas.width;
     const canvasHeight = this.gl.canvas.height;
 
-    const radius = 0.5;
+    const radius = 0.6; // 円の半径（1がマックス）
+    const thickness = 0.1; // 外周の厚み
 
-    const COUNT = 200;
+    const COUNT = 250; // 点の密度
     for (let i = 0; i < COUNT; ++i) {
-        const x = i / (COUNT - 1) * 2.0 - 1.0;
+        const x = i / (COUNT - 1) * 2.0 - 1.0; // -1.0 ~ 1.0 の範囲
         for (let j = 0; j < COUNT; ++j) {
-            const y = j / (COUNT - 1) * 2.0 - 1.0;
+            const y = j / (COUNT - 1) * 2.0 - 1.0; // -1.0 ~ 1.0 の範囲
 
-            // 円の内部にある点だけ追加
-            if (x * x + y * y <= radius * radius) {
+            const distanceSquared = x * x + y * y;
+
+            // 外周の範囲にある点だけ追加
+            if (distanceSquared >= (radius - thickness) * (radius - thickness) &&
+                distanceSquared <= radius * radius) {
                 this.position.push(x, y, 0.0);
-                this.color.push(1.0, 1.0, 0.5, 1.0);
-                this.pointSize.push(3.0);
+                this.color.push(1.0, y, x, 1.0); // 色
+                this.pointSize.push(3.0); // 点の大きさ
             }
         }
     }
@@ -166,6 +170,7 @@ class WebGLApp {
         WebGLUtility.createVbo(this.gl, this.pointSize),
     ];
 }
+
 
 
 
