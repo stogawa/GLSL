@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const globule = require('globule');
 const webpack = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
@@ -93,7 +94,18 @@ const app = {
     new MiniCssExtractPlugin({
       filename: './assets/css/common.css',
     }),
+		new CopyWebpackPlugin({
+      patterns: [
+        { from: './assets/js/glsl/main.vert', to: 'main.vert' },
+        { from: './assets/js/glsl/main.frag', to: 'main.frag' },
+      ],
+    }),
   ],
+	devServer: {
+    static: {
+      directory: path.join(__dirname, 'dist'),
+    },
+  },
   optimization: {
     minimizer: [
       new TerserPlugin({
