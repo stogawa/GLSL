@@ -1,85 +1,89 @@
 import { WebGLUtility, ShaderProgram } from '../lib/webgl.js';
 import { WebGLMath } from '../lib/math.js';
 import { WebGLOrbitCamera } from '../lib/camera.js';
-import { Pane } from '../lib/tweakpane-4.0.0.min.js';
+
+// 画像ファイルをインポート
+import sampleImage from '/assets/img/sample.jpg';  // Webpackによるパス解決
+import sampleImage2 from '/assets/img/sample2.jpg'; // もう1枚の画像もインポート
 
 window.addEventListener('DOMContentLoaded', async () => {
-  const app = new WebGLApp();
-  window.addEventListener('resize', app.resize, false);
-  app.init('webgl-canvas');
-  await app.load();
-  app.setup();
-  app.render();
+  // 1つ目のWebGLAppインスタンス（webgl-canvas01用）
+  const app1 = new WebGLApp();
+  window.addEventListener('resize', app1.resize, false);
+  app1.init('webgl-canvas01');
+  await app1.load(sampleImage); // 初期化時にインポートした画像パスを渡す
+  app1.setup();
+  app1.render();
+
+  // 2つ目のWebGLAppインスタンス（webgl-canvas02用）
+  const app2 = new WebGLApp();
+  window.addEventListener('resize', app2.resize, false);
+  app2.init('webgl-canvas02');
+  await app2.load(sampleImage2); // 別の画像を指定
+  app2.setup();
+  app2.render();
 }, false);
 
 class WebGLApp {
-  /**
-   * @constructor
-   */
   constructor() {
-    // 汎用的なプロパティ
     this.canvas = null;
     this.gl = null;
     this.running = false;
-
-    // this を固定するためメソッドをバインドする
     this.resize = this.resize.bind(this);
     this.render = this.render.bind(this);
-
-    // 各種パラメータや uniform 変数用
-    this.previousTime = 0; // 直前のフレームのタイムスタンプ
-    this.timeScale = 0.0;  // 時間の進み方に対するスケール
-    this.uTime = 0.0;      // uniform 変数 time 用
-
-    // tweakpane を初期化
-    // const pane = new Pane();
-    // pane.addBlade({
-    //   view: 'slider',
-    //   label: 'time-scale',
-    //   min: 0.0,
-    //   max: 2.0,
-    //   value: this.timeScale,
-    // })
-    // .on('change', (v) => {
-    //   this.timeScale = v.value;
-    // });
+    this.previousTime = 0;
+    this.timeScale = 0.0;
+    this.uTime = 0.0;
   }
-  /**
-   * シェーダやテクスチャ用の画像など非同期で読み込みする処理を行う。
-   * @return {Promise}
-   */
-  async load() {
+
+  async load(imageSource) {
+    // シェーダをロード
     const vs = await WebGLUtility.loadFile('./main.vert');
     const fs = await WebGLUtility.loadFile('./main.frag');
     this.shaderProgram = new ShaderProgram(this.gl, {
       vertexShaderSource: vs,
       fragmentShaderSource: fs,
-      // attribute や uniform の構成がシェーダと一致するように気をつける @@@
-      attribute: [
-        'position',
-        'texCoord',
-      ],
-      stride: [
-        3,
-        2,
-      ],
-      uniform: [
-        'mvpMatrix',
-        'textureUnit', // テクスチャユニット
-      ],
-      type: [
-        'uniformMatrix4fv',
-        'uniform1i', // テクスチャユニットは整数値なので 1i を使う
-      ],
+      attribute: ['position', 'texCoord'],
+      stride: [3, 2],
+      uniform: ['mvpMatrix', 'textureUnit'],
+      type: ['uniformMatrix4fv', 'uniform1i'],
     });
 
-    // 画像を読み込み、テクスチャを生成する。初期化が全部終わったテクスチャが入る。 @@@
-    const source = '/assets/img/sample.jpg';
-    this.texture = await WebGLUtility.createTextureFromFile(this.gl, source);
+    // 渡された画像ソースからテクスチャを生成
+    this.texture = await this.loadTexture(imageSource); // 非同期でテクスチャを読み込む
   }
-  /**
-   * WebGL のレンダリングを開始する前のセットアップを行う。
-   */
+
+  // 非同期で画像を読み込むメソッド
+  async loadTexture(imageSource) {
+    try {
+      const image = await WebGLUtility.loadImage(imageSource);  // 画像の読み込みを待つ
+      return this.createTextureFromImage(image);  // 画像を使ってテクスチャ作成
+    } catch (error) {
+      console.error('Failed to load image:', error);
+      throw error;  // エラーハンドリング
+    }
+  }
+
+  // 画像をテクスチャに変換するメソッド
+  createTextureFromImage(image) {
+    const gl = this.gl;
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    
+    // テクスチャ設定
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    
+    // テクスチャパラメータの設定
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // テクスチャを返す
+    return texture;
+  }
+
   setup() {
     const gl = this.gl;
 
@@ -96,108 +100,79 @@ class WebGLApp {
     this.running = true;
     this.previousTime = Date.now();
 
-    gl.clearColor(0.1, 0.1, 0.1, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 0.0);
     gl.clearDepth(1.0);
     gl.enable(gl.DEPTH_TEST);
 
-    // このサンプルではテクスチャは途中で切り替えないので……
-    // このタイミングでユニット０（ゼロ）にバインドしておく @@@
-    gl.activeTexture(gl.TEXTURE0); //TEXTURE0の他にTEXTURE1とかTEXTURE2とかある。TEXTURE1にするとユニット1にバインド（選択）でき、異なるユニットにバインドできる。複数のテクスチャをバインドできる（"同時に"バインドできるテクスチャの最大数には制限がある）。「setUniform」でどのユニット番号をシェーダーに送るかを指定する（ここの番号は合わせないと送れないよ）。手続きが難しい。
+    // テクスチャをバインド
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
   }
-  /**
-   * ジオメトリ（頂点情報）を構築するセットアップを行う。
-   */
+
   setupGeometry() {
-    // 頂点座標
     this.position = [
-      -1.0,  1.0,  0.0,
-       1.0,  1.0,  0.0,
-      -1.0, -1.0,  0.0,
-       1.0, -1.0,  0.0,
+      -1.0, 1.0, 0.0,
+       1.0, 1.0, 0.0,
+      -1.0, -1.0, 0.0,
+       1.0, -1.0, 0.0,
     ];
-    // テクスチャ座標 @@@
-    // ※ 0.0 ～ 1.0 の範囲でテクスチャを参照する際の位置を指定する
     this.texCoord = [
       0.0, 0.0,
       1.0, 0.0,
       0.0, 1.0,
       1.0, 1.0,
     ];
-    // すべての頂点属性を VBO にしておく
     this.vbo = [
       WebGLUtility.createVbo(this.gl, this.position),
       WebGLUtility.createVbo(this.gl, this.texCoord),
     ];
   }
-  /**
-   * WebGL を利用して描画を行う。
-   */
+
   render() {
-    // 短く書けるようにローカル変数に一度代入する
     const gl = this.gl;
     const m4 = WebGLMath.Mat4;
     const v3 = WebGLMath.Vec3;
 
-    // running が true の場合は requestAnimationFrame を呼び出す
     if (this.running === true) {
       requestAnimationFrame(this.render);
     }
 
-    // 直前のフレームからの経過時間を取得
     const now = Date.now();
     const time = (now - this.previousTime) / 1000;
     this.uTime += time * this.timeScale;
     this.previousTime = now;
 
-    // ビューポートの設定と背景色・深度値のクリア
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // - 各種行列を生成する ---------------------------------------------------
-    // モデル座標変換行列
-    const rotateAxis  = v3.create(0.0, 1.0, 0.0);
+    const rotateAxis = v3.create(0.0, 1.0, 0.0);
     const rotateAngle = this.uTime * 0.2;
     const m = m4.rotate(m4.identity(), rotateAngle, rotateAxis);
 
-    // ビュー座標変換行列（WebGLOrbitCamera から行列を取得する）
     const v = this.camera.update();
-
-    // プロジェクション座標変換行列
-    const fovy   = 60;                                     // 視野角（度数）
-    const aspect = this.canvas.width / this.canvas.height; // アスペクト比
-    const near   = 0.1;                                    // ニア・クリップ面までの距離
-    const far    = 20.0;                                   // ファー・クリップ面までの距離
+    const fovy = 60;
+    const aspect = this.canvas.width / this.canvas.height;
+    const near = 0.1;
+    const far = 20.0;
     const p = m4.perspective(fovy, aspect, near, far);
 
-    // 行列を乗算して MVP 行列を生成する（行列を掛ける順序に注意）
     const vp = m4.multiply(p, v);
     const mvp = m4.multiply(vp, m);
-    // ------------------------------------------------------------------------
 
-    // プログラムオブジェクトを指定し、VBO と uniform 変数を設定
     this.shaderProgram.use();
     this.shaderProgram.setAttribute(this.vbo);
-    this.shaderProgram.setUniform([
-      mvp,
-      0, // 使いたいテクスチャのバインドされているユニット番号 @@@
-    ]);
+    this.shaderProgram.setUniform([mvp, 0]);
 
-    // 設定済みの情報を使って、頂点を画面にレンダリングする
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.position.length / 3);
   }
-  /**
-   * リサイズ処理を行う。
-   */
+
   resize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
+    const canvasArea = document.querySelector('.canvas-area');
+    this.canvas.width = canvasArea.clientWidth;
+    this.canvas.height = canvasArea.clientHeight;
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
-  /**
-   * WebGL を実行するための初期化処理を行う。
-   * @param {HTMLCanvasElement|string} canvas - canvas への参照か canvas の id 属性名のいずれか
-   * @param {object} [option={}] - WebGL コンテキストの初期化オプション
-   */
+
   init(canvas, option = {}) {
     if (canvas instanceof HTMLCanvasElement === true) {
       this.canvas = canvas;

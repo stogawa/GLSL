@@ -63,7 +63,7 @@ export class WebGLOrbitCamera {
     this.target.addEventListener('mousedown', this.mouseInteractionStart, false);
     this.target.addEventListener('mousemove', this.mouseInteractionMove,  false);
     this.target.addEventListener('mouseup',   this.mouseInteractionEnd,   false);
-    this.target.addEventListener('wheel',     this.wheelScroll,           false);
+    // this.target.addEventListener('wheel',     this.wheelScroll,           false); // ホイールイベント無し
     this.target.addEventListener('contextmenu', (event) => {
       event.preventDefault();
     }, false);

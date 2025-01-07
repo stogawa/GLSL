@@ -11,15 +11,19 @@ const pageMeta = {
 <%- include('_template/_header', { meta: pageMeta }) %>
 
 <section id="section01">
-	<div class="canvas-area"></div>
-	<p>section01が入ります</p>
+	<div class="canvas-area">
+		<canvas id="webgl-canvas01"></canvas>
+	</div>
 </section>
-
 <section id="section02">
-	<div class="canvas-area"></div>
-	<p>section02が入ります</p>
+	<div class="canvas-area">
+		<canvas id="webgl-canvas02"></canvas>
+	</div>
 </section>
 
-<canvas id="webgl-canvas"></canvas>
+<ul id="sidenav">
+	<li><a href="#section01">01</a></li>
+	<li><a href="#section02">02</a></li>
+</ul>
 
 <%- include('_template/_footer', { meta: pageMeta }); %>

@@ -71,9 +71,9 @@ const app = {
       },
       {
         test: /\.(png|svg|jpe?g|gif|mp4|webp|otf|ico)$/,
-        type: "asset/resource",
+        type: "asset/resource",  // 画像をリソースとして扱い、適切にパスを出力
         generator: {
-          filename: "[path][name][ext][query]"
+          filename: "assets/img/[name][ext][query]"  // 出力先パスを指定
         }
       },
       {
@@ -94,10 +94,11 @@ const app = {
     new MiniCssExtractPlugin({
       filename: './assets/css/common.css',
     }),
-		new CopyWebpackPlugin({
+    new CopyWebpackPlugin({
       patterns: [
         { from: './assets/js/glsl/main.vert', to: 'main.vert' },
         { from: './assets/js/glsl/main.frag', to: 'main.frag' },
+        { from: './assets/img', to: 'assets/img' }  // 画像をビルドディレクトリにコピー
       ],
     }),
   ],
