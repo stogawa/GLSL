@@ -1,0 +1,15 @@
+<%
+const pageMeta = {
+	title: 'クリニック下総中山駅前',
+	title_span: '',
+	description: 'ホームページの説明',
+	bodyClass: 'home',
+	site: 'GLSLスクール'
+};
+
+%>
+<%- include('_template/_header', { meta: pageMeta }) %>
+
+<canvas id="webgl-canvas"></canvas>
+
+<%- include('_template/_footer', { meta: pageMeta }); %>
