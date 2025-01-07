@@ -1,6 +1,6 @@
 <%
 const pageMeta = {
-	title: 'クリニック下総中山駅前',
+	title: 'GLSL最終課題',
 	title_span: '',
 	description: 'ホームページの説明',
 	bodyClass: 'home',
@@ -9,6 +9,16 @@ const pageMeta = {
 
 %>
 <%- include('_template/_header', { meta: pageMeta }) %>
+
+<section id="section01">
+	<div class="canvas-area"></div>
+	<p>section01が入ります</p>
+</section>
+
+<section id="section02">
+	<div class="canvas-area"></div>
+	<p>section02が入ります</p>
+</section>
 
 <canvas id="webgl-canvas"></canvas>
 

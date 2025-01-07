@@ -1,5 +1,18 @@
 @use "../abstracts/_index" as *;
 
 .home {
+	.canvas-area {
+		margin-inline: auto;
+		width: 500px;
+		height: 300px;
+		background: #fff;
+	}
 
+	#section01 {
+		background: pink;
+		padding: 20px;
+	}
+	#section02 {
+		background: orange;
+	}
 }

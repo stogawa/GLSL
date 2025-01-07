@@ -1,25 +1,13 @@
 
 attribute vec3 position;
-attribute vec4 color;
+attribute vec2 texCoord; // テクスチャ座標 @@@
+uniform mat4 mvpMatrix;
 
-uniform float time; // 経過時間
-uniform mat4 mvpMatrix; // MVP 行列 @@@
-
-varying vec4 vColor;
+varying vec2 vTexCoord; // テクスチャ座標用 @@@
 
 void main() {
-  vColor = color;
-  gl_PointSize = 4.0;
+  // テクスチャの読み出しはフラグメントシェーダで @@@
+  vTexCoord = texCoord;
 
-  // 頂点の Z 座標をサイン波で揺らす
-  float s = sin(position.x + time);
-  vec3 p = position + vec3(0.0, 0.0, s);
-
-  // MVP 行列を乗算してから出力する @@@
-  // ※ここでも列優先であることに注意
-  gl_Position = mvpMatrix * vec4(p, 1.0);
-
-	// mvpMatrix（行列）と掛け算しないと、前回やっていた平面の状態になる
-	// gl_Position = vec4(p, 1.0);
+  gl_Position = mvpMatrix * vec4(position, 1.0);
 }
-
